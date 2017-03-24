@@ -78,7 +78,7 @@ Bind to a random port on `127.0.0.1`, and make a lot of noise:
 
    ``sudo devns --host 127.0.0.1 -vvv``
 
-You get the idea. Here's the help output::
+Here's what ``devns --help`` gets you:
 
     usage: devns [-h] [--verbose | --quiet] [--host HOST] [--port PORT]
                  [--address ADDRESS] [--no-resolver]
