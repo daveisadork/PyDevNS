@@ -4,4 +4,8 @@ from setuptools import setup
 
 
 # confused? check setup.cfg
-setup()
+setup(
+    entry_points={
+        "console_scripts": ["devns = devns.cli:main"]
+    }
+)
