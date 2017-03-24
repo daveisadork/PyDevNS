@@ -2,8 +2,7 @@ PyDevNS
 =======
 A pure Python DNS server for developers.
 
-
-.. code-block::
+How to use the thing::
     usage: devns [-h] [--verbose | --quiet] [--host HOST] [--port PORT]
                  [--address ADDRESS] [--no-resolver]
                  [domains]
