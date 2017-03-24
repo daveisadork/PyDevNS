@@ -6,3 +6,6 @@ class Config:
     verbosity = 0
     port = 0
     address = None
+
+
+config = Config()
