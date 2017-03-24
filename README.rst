@@ -78,20 +78,22 @@ Bind to a random port on `127.0.0.1`, and make a lot of noise:
 
    ``sudo devns --host 127.0.0.1 -vvv``
 
+----------
+
 Here's what ``devns --help`` gets you:
 
-    usage: devns [-h] [--verbose | --quiet] [--host HOST] [--port PORT]
-                 [--address ADDRESS] [--no-resolver]
-                 [domains]
+usage: devns [-h] [--verbose | --quiet] [--host HOST] [--port PORT]
+             [--address ADDRESS] [--no-resolver]
+             [domains]
 
-    positional arguments:
-      domains             domains to create resolver files for
+positional arguments:
+  domains             domains to create resolver files for
 
-    optional arguments:
-      -h, --help          show this help message and exit
-      --verbose, -v       verbose output
-      --quiet, -q         quiet mode
-      --host HOST         address to listen on
-      --port PORT         port to listen on
-      --address ADDRESS   IP address to respond with
-      --no-resolver, -nr  don't put files in /etc/resolver
+optional arguments:
+  -h, --help          show this help message and exit
+  --verbose, -v       verbose output
+  --quiet, -q         quiet mode
+  --host HOST         address to listen on
+  --port PORT         port to listen on
+  --address ADDRESS   IP address to respond with
+  --no-resolver, -nr  don't put files in /etc/resolver
