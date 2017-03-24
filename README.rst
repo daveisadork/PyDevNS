@@ -19,7 +19,7 @@ Well, that's all well and good, but what about when you need ``local.dev`` and
 
 OK, ``dnsmasq`` kind of seems like overkill, but what about when you need
 ``local.dev`` or ``reallycoolprogrammer.local.dev`` to work from inside a 
-ocker container?
+docker container?
 
    Well then I just make ``dnsmasq`` resolve it to my real IP instead of
    ``127.0.0.1``. 
