@@ -14,11 +14,5 @@ python:
 # command to run tests
 script: tox
 # command to install dependencies
-install:
- - pip install -r requirements.txt
- - pip install wheel codecov coverage
- - python setup.py install bdist_wheel
-script:
- - tox
- - tox --installpkg ./dist/devns-*.whl --travis-after
+install: pip install -r requirements.txt
 after_success: coverage combine && codecov
