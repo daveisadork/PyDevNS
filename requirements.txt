@@ -1,0 +1,6 @@
+future
+pytest
+pytest-runner
+six
+tox
+tox-travis
