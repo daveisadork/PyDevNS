@@ -8,8 +8,8 @@ PyDevNS
   :target: https://codecov.io/gh/daveisadork/PyDevNS
 
 PyDevNS is a pure Python DNS server for developers. You know how you need
-a domain name to use for interact with your app locally? Well, this is the tool
-for you.
+a domain name to use for interacting with your app locally? Well, this is the
+tool for you.
 
 ----------
 
