@@ -1,3 +1,8 @@
+from __future__ import (
+    absolute_import, print_function, unicode_literals
+)
+from builtins import *  # noqa
+
 import os
 import sys
 import socket
@@ -5,8 +10,7 @@ import logging
 import functools
 import subprocess
 
-from . import config
-from . import __version__
+from . import config, DNS
 from contextlib import contextmanager
 
 
@@ -19,14 +23,21 @@ def interruptable(func):
         try:
             return func(*args, **kwargs)
         except KeyboardInterrupt:
-            logging.info("User pressed Control+C, shutting down")
+            logger.info("User pressed Control+C, shutting down")
 
     return decorator
 
 
+def _intify(value):
+    if not isinstance(value, int):
+        value = ord(value)
+    return value
+
+
 class DevNS(object):
-    def __init__(self):
-        print "PyDevNS v{}".format(__version__)
+    def __init__(self, config=config, **kwargs):
+        self.config = config
+        self.config.update(kwargs)
 
     def _choose_address(self, addresses):
         logger.debug("Selecting the best IP from candidates %r", addresses)
@@ -46,12 +57,14 @@ class DevNS(object):
             except:
                 logger.debug("Skipping %s", address)
         try:
-            address = "{}.{}.{}.{}".format(
-                *sorted(
+            address = ".".join((
+                str(part) for part in sorted(
                     possible,
-                    key=lambda p: "{}-{}".format(p[-1], 0 if p[0] == 127 else 1)
+                    key=lambda p: "{}-{}".format(
+                        p[-1], 0 if p[0] == 127 else 1
+                    )
                 )[-1]
-            )
+            ))
             logger.debug("Selected IP address %s", address)
             return address
         except:
@@ -69,7 +82,8 @@ class DevNS(object):
     def _get_address_by_ifconfig(self):
         logger.debug("Attempting to determine response IP from ifconfig")
         addresses = []
-        for line in subprocess.check_output(("ifconfig")).split("\n"):
+        output = subprocess.check_output(("ifconfig", ))
+        for line in output.split(b"\n"):
             try:
                 parts = line.strip().split(" ")
                 assert parts[0] == "inet"
@@ -94,113 +108,117 @@ class DevNS(object):
             )
             sys.exit(1)
         self._address = address
+        self._encoded_address = "".join(
+            map(lambda x: chr(int(x)), address.split('.'))
+        ).encode("latin-1")
 
     @contextmanager
-    def _open_socket(self):
+    def bind(self):
         logger.debug("Opening socket")
         connection = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         logger.debug("Setting socket timeout to 3.05 seconds")
         connection.settimeout(3.05)
-        if config.port:
+        if self.config.port:
             logger.debug(
-                "Attempting to bind to %s:%s", config.host, config.port
+                "Attempting to bind to {c.host}:{c.port}".format(c=self.config)
             )
         else:
             logger.debug(
-                "Attempting to bind to %s with a random port", config.host
+                "Attempting to bind to %r with a random port", self.config.host
             )
         try:
-            connection.bind((config.host, config.port))
+            connection.bind((self.config.host, self.config.port))
             logger.debug(
                 "Successfully bound to %s:%s", *connection.getsockname()
             )
-            yield connection
-        except Exception as e:
+            self.connection = connection
+        except socket.error as e:
             yield e
+        else:
+            yield self.connection
         finally:
             logger.debug("Closing socket")
-            connection.close()
+            self.connection.close()
 
-    def _listen(self, connection):
+    def _handle_query(self, data, client):
+        logger.debug("Request from %s:%s", *client)
+        labels = []
+        opcode = (_intify(data[2]) >> 3) & 15  # This is so gross.
+        if opcode != DNS.OpCode.Query:
+            logger.warning("Ignoring unsupported opcode %s", opcode)
+            return
+        ini = 12
+        lon = _intify(data[ini])
+        while lon != 0:
+            labels.append(data[ini+1:ini+lon+1].decode("latin-1"))
+            ini += lon + 1
+            lon = _intify(data[ini])
+        domain = ".".join(labels)
+        logger.info("QUERY %s IN A %s", domain, self.address)
+        self.connection.sendto(b"".join((
+            data[:2],
+            b"\x81\x80",
+            data[4:6],
+            data[4:6],
+            b"\x00\x00\x00\x00",  # Questions and Answers Counts
+            data[12:],            # Original Domain Name Question
+            b"\xc0\x0c\x00\x01\x00\x01\x00\x00\x00\x3c\x00\x04",
+            self._encoded_address
+        )), client)
+
+    def _listen(self):
         self.address = config.address
         logger.debug(
             "Ready to reply to incoming requests with %s", self.address
         )
         while True:
             try:
-                data, addr = connection.recvfrom(1024)
-                p = DNSQuery(data)
-                r = p.response(self.address, p.domain)
-                logger.info("DNS Request: %s -> %s", p.domain, self.address)
-                connection.sendto(r, addr)
+                self._handle_query(*self.connection.recvfrom(1024))
             except socket.error:
                 continue
 
     @contextmanager
-    def _resolver(self, connection):
+    def _resolver(self):
         resolvers = []
         resolver_config = "# generated by devns\nnameserver {}\nport {}".format(
-            *connection.getsockname()
+            *self.connection.getsockname()
         )
+
         try:
             if config.resolver:
                 for domain in config.domains:
                     path = os.path.join("/etc", "resolver", domain)
                     with open(path, "w") as resolver:
-                        logger.debug("Writing resolver config to %r", path)
+                        logger.debug("Writing resolver config to %s", path)
                         resolver.write(resolver_config)
                     resolvers.append(path)
-            yield resolvers
         except IOError as e:
             yield e
+        else:
+            yield resolvers
         finally:
-            for resolver in resolvers:
-                logger.debug("Cleaning up resolver config %r", resolver)
-                os.unlink(resolver)
+            while resolvers:
+                resolver = resolvers.pop()
+                logger.debug("Cleaning up resolver config %s", resolver)
+                try:
+                    os.unlink(resolver)
+                except:
+                    logger.error(
+                        "Failed cleaning up resolver config %s", resolver
+                    )
 
     @interruptable
-    def _run(self, connection):
-        with self._resolver(connection) as resolver:
+    def _run(self):
+        with self._resolver() as resolver:
             if isinstance(resolver, Exception):
                 logger.critical(
                     "Failed trying to write resolver config: %s", resolver
                 )
                 return 3
-            return self._listen(connection)
+            return self._listen()
 
     def run(self):
-        with self._open_socket() as connection:
+        with self.bind() as connection:
             if isinstance(connection, Exception):
-                logger.critical(
-                    "Failed trying to open a connection: %s", connection
-                )
                 return 2
-            return self._run(connection)
-
-
-class DNSQuery:
-    # DNSQuery class from
-    # http://code.activestate.com/recipes/491264-mini-fake-dns-server/
-
-    def __init__(self, data):
-        self.data = data
-        self.domain = ''
-
-        tipo = (ord(data[2]) >> 3) & 15   # Opcode bits
-        if tipo == 0:                     # Standard query
-            ini = 12
-            lon = ord(data[ini])
-            while lon != 0:
-                self.domain += data[ini+1:ini+lon+1]+'.'
-                ini += lon + 1
-                lon = ord(data[ini])
-
-    def response(self, ip, tld):
-        packet = ''
-        packet += self.data[:2] + "\x81\x80"
-        packet += self.data[4:6] + self.data[4:6] + '\x00\x00\x00\x00'   # Questions and Answers Counts  # noqa
-        packet += self.data[12:]                                         # Original Domain Name Question  # noqa
-        packet += '\xc0\x0c'                                             # Pointer to domain name  # noqa
-        packet += '\x00\x01\x00\x01\x00\x00\x00\x3c\x00\x04'             # Response type, ttl and resource data length -> 4 bytes  # noqa
-        packet += str.join('',map(lambda x: chr(int(x)), ip.split('.'))) # 4bytes of IP  # noqa
-        return packet
+            return self._run()
