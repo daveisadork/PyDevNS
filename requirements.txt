@@ -1,5 +1,7 @@
+codecov
 future
 pytest
+pytest-cov
 pytest-runner
 six
 tox

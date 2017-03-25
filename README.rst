@@ -4,9 +4,8 @@ PyDevNS
 .. image:: https://travis-ci.org/daveisadork/PyDevNS.svg?branch=master
     :target: https://travis-ci.org/daveisadork/PyDevNS
 
-.. image:: https://codecov.io/github/daveisadork/PyDevNS/coverage.svg?branch=master
-    :target: https://codecov.io/github/daveisadork/PyDevNS
-    :alt: codecov.io
+.. image:: https://codecov.io/gh/daveisadork/PyDevNS/branch/master/graph/badge.svg
+  :target: https://codecov.io/gh/daveisadork/PyDevNS
 
 PyDevNS is a pure Python DNS server for developers. You know how you need
 a domain name to use for interact with your app locally? Well, this is the tool
