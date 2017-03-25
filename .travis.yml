@@ -11,7 +11,15 @@ python:
   - "3.6-dev" # 3.6 development branch
   - "3.7-dev" # 3.7 development branch
   - "nightly" # currently points to 3.7-dev
-# command to install dependencies
-install: "pip install -r requirements.txt"
 # command to run tests
 script: tox
+# command to install dependencies
+install:
+ - pip install -r requirements.txt
+ - pip install wheel codecov coverage
+ - python setup.py install bdist_wheel
+ - pip install ./dist/devns-*.whl
+script:
+ - tox
+ - tox --installpkg ./dist/devns-*.whl --travis-after
+after_success: coverage combine && codecov

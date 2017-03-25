@@ -1,4 +1,5 @@
 codecov
+coverage
 future
 pytest
 pytest-cov
@@ -6,3 +7,4 @@ pytest-runner
 six
 tox
 tox-travis
+wheel
