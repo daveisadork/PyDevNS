@@ -25,7 +25,7 @@ docker container?
    ``127.0.0.1``. 
 
 So you edit the config and restart ``dnsmasq`` every time you move from home,
-to the coffee shop, to office, wherever...
+to the coffee shop, to the office, wherever...
 
    That is kind of a pain, now that you mention it...
 
@@ -53,7 +53,7 @@ domains ending it ``.dev`` to ``devns``.
 
 Run it with ``sudo`` to do that? Yeah probably, unless your system is insane
 and just lets anybody write to ``/etc`` all willy nilly, in which case you have
-bigger problems that getting ``local.dev`` to resolve to something sensible.
+bigger problems than getting ``local.dev`` to resolve to something sensible.
 
 Examples
 --------
@@ -72,7 +72,7 @@ Respond with a specific IP every time instead of an auto discovered one:
 
 Listen on port 53535, write config files for `.dev` and `.local.co`:
 
-  ``sudo devns --port 53535 dev local.co``
+  ``sudo devns --port 53535 --domains dev local.co``
 
 Bind to a random port on `127.0.0.1`, and make a lot of noise:
 
@@ -83,17 +83,16 @@ Bind to a random port on `127.0.0.1`, and make a lot of noise:
 Here's what ``devns --help`` gets you:
 
 usage: devns [-h] [--verbose | --quiet] [--host HOST] [--port PORT]
-             [--address ADDRESS] [--no-resolver]
-             [domains]
-
-positional arguments:
-  domains             domains to create resolver files for
+             [--address ADDRESS]
+             [--no-resolver | --domains [DOMAIN [DOMAIN ...]]]
 
 optional arguments:
-  -h, --help          show this help message and exit
-  --verbose, -v       verbose output
-  --quiet, -q         quiet mode
-  --host HOST         address to listen on
-  --port PORT         port to listen on
-  --address ADDRESS   IP address to respond with
-  --no-resolver, -nr  don't put files in /etc/resolver
+  -h, --help            show this help message and exit
+  --verbose, -v         verbose output
+  --quiet, -q           quiet mode
+  --host HOST           address to listen on
+  --port PORT           port to listen on
+  --address ADDRESS     IP address to respond with
+  --no-resolver, -nr    don't put files in /etc/resolver
+  --domains [DOMAIN [DOMAIN ...]]
+                        domains to create resolver files for
