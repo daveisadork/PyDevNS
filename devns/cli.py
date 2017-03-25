@@ -5,11 +5,8 @@ from . import config
 from .server import DevNS
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        prog="devns",
-        # formatter_class=argparse.ArgumentDefaultsHelpFormatter
-    )
+def parse_args(args=None, config=config):
+    parser = argparse.ArgumentParser(prog="devns")
     log_output_group = parser.add_mutually_exclusive_group()
     log_output_group.add_argument(
         "--verbose", "-v", action="count", dest="verbosity",
@@ -31,14 +28,14 @@ def main():
         help="don't put files in /etc/resolver"
     )
     resolver_group.add_argument(
-        "domains", type=str, nargs='?',
+        "--domains", type=str, nargs="*", metavar="DOMAIN",
         help='domains to create resolver files for'
     )
 
-    parser.set_defaults(**config.__dict__)
-    parser.parse_args(namespace=config)
-    config.log_level = max(10, config.log_level - config.verbosity * 10)
-    logging.basicConfig(level=config.log_level)
+    parser.set_defaults(**config.DEFAULTS)
+    return parser.parse_args(args, namespace=config)
 
-    app = DevNS()
+
+def main():  # pragma no cover
+    app = DevNS(parse_args())
     return app.run()
