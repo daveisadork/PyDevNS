@@ -33,7 +33,8 @@ PyDevNS is a DNS server for developers.
 :license: MIT, see LICENSE for more details.
 """
 
-from .config import config  # noqa
+from .config import Config
+config = Config()  # noqa
 
 
 __title__ = "devns"
@@ -41,3 +42,7 @@ __version__ = "0.1.1"
 __author__ = "Dave Hayes"
 __license__ = "MIT"
 __copyright__ = "Copyright (c) 2017 Dave Hayes"
+
+from .dns import DNS  # noqa
+from . import server  # noqa
+from . import cli  # noqa
