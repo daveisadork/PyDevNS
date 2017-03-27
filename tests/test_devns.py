@@ -172,6 +172,53 @@ def test_server_get_address_by_hostname_error(server):
     assert address is None
 
 
+def test_server_address_error(server):
+    with patch("devns.server.subprocess") as subprocess, \
+         patch("devns.server.socket") as socket_mock:
+        socket_mock.getfqdn = MagicMock(return_value="test.example.com")
+        socket_mock.gethostbyname = MagicMock(side_effect=socket.error)
+        subprocess.check_output = MagicMock(return_value="")
+        with pytest.raises(RuntimeError):
+            server.address = None
+        socket_mock.getfqdn.assert_called_once_with()
+        socket_mock.gethostbyname.assert_called_once_with("test.example.com")
+        subprocess.check_output.assert_called_once_with(("ifconfig", ))
+
+
+@pytest.mark.parametrize("addresses, address", [
+    ([], None),
+    (["8.8.8.8", "8.8.4.4"], None),
+    (["127.0.0.1", "192.168.1.1", "192.168.1.5"], "192.168.1.5"),
+    (["8.8.8.8", "8.8.4.4", "127.0.0.1"], "127.0.0.1"),
+    (["127.0.0.1", "127.0.1.11", "10.10.10.10"], "10.10.10.10"),
+    (["10.10.5.1", "10.10.5.2"], "10.10.5.2"),
+    (["10.10.1.1", "192.169.5.5", "127.0.1.12", "172.16.1.5"], "172.16.1.5"),
+    (["10.10.3.255", "172.1.1.8", "127.0.1.12", "192.168.1.1"], "192.168.1.1"),
+])
+def test_server_choose_address(server, addresses, address):
+    assert server._choose_address(addresses) == address
+
+
+@pytest.mark.parametrize("query, expected", [
+    (
+        b"\x96\xd1\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00\x05local\x03dev\x00\x00\x01\x00\x01",  # noqa
+        b"\x96\xd1\x81\x80\x00\x01\x00\x01\x00\x00\x00\x00\x05local\x03dev\x00\x00\x01\x00\x01\xc0\x0c\x00\x01\x00\x01\x00\x00\x00<\x00\x04\x01\x02\x03\x04"  # noqa
+    ), # noqa
+    (
+        b"Kj\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00\x04test\x05local\x03dev\x00\x00\x01\x00\x01",  # noqa
+        b"Kj\x81\x80\x00\x01\x00\x01\x00\x00\x00\x00\x04test\x05local\x03dev\x00\x00\x01\x00\x01\xc0\x0c\x00\x01\x00\x01\x00\x00\x00<\x00\x04\x01\x02\x03\x04" # noqa
+    ),
+    (
+        b"\x96\xd1\x50\x00\x00\x01\x00\x00\x00\x00\x00\x00\x05local\x03dev\x00\x00\x01\x00\x01", # noqa
+        None
+    ),
+])
+def test_build_response(server, query, expected):
+    server.address = "1.2.3.4"
+    response = server._build_response(query)
+    assert response == expected
+
+
 @pytest.mark.parametrize("ifconfig, expected", [
     ("\n".join([
         "lo0: flags=8049<UP,LOOPBACK,RUNNING,MULTICAST> mtu 16384",
@@ -352,37 +399,3 @@ def test_server_get_address_by_ifconfig(server, ifconfig, expected):
         address = server._get_address_by_ifconfig()
         subprocess.check_output.assert_called_once_with(("ifconfig", ))
     assert address == expected
-
-
-@pytest.mark.parametrize("addresses, address", [
-    ([], None),
-    (["8.8.8.8", "8.8.4.4"], None),
-    (["127.0.0.1", "192.168.1.1", "192.168.1.5"], "192.168.1.5"),
-    (["8.8.8.8", "8.8.4.4", "127.0.0.1"], "127.0.0.1"),
-    (["127.0.0.1", "127.0.1.11", "10.10.10.10"], "10.10.10.10"),
-    (["10.10.5.1", "10.10.5.2"], "10.10.5.2"),
-    (["10.10.1.1", "192.169.5.5", "127.0.1.12", "172.16.1.5"], "172.16.1.5"),
-    (["10.10.3.255", "172.1.1.8", "127.0.1.12", "192.168.1.1"], "192.168.1.1"),
-])
-def test_server_choose_address(server, addresses, address):
-    assert server._choose_address(addresses) == address
-
-
-@pytest.mark.parametrize("query, expected", [
-    (
-        b"\x96\xd1\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00\x05local\x03dev\x00\x00\x01\x00\x01",  # noqa
-        b"\x96\xd1\x81\x80\x00\x01\x00\x01\x00\x00\x00\x00\x05local\x03dev\x00\x00\x01\x00\x01\xc0\x0c\x00\x01\x00\x01\x00\x00\x00<\x00\x04\x01\x02\x03\x04"  # noqa
-    ), # noqa
-    (
-        b"Kj\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00\x04test\x05local\x03dev\x00\x00\x01\x00\x01",  # noqa
-        b"Kj\x81\x80\x00\x01\x00\x01\x00\x00\x00\x00\x04test\x05local\x03dev\x00\x00\x01\x00\x01\xc0\x0c\x00\x01\x00\x01\x00\x00\x00<\x00\x04\x01\x02\x03\x04" # noqa
-    ),
-    (
-        b"\x96\xd1\x50\x00\x00\x01\x00\x00\x00\x00\x00\x00\x05local\x03dev\x00\x00\x01\x00\x01", # noqa
-        None
-    ),
-])
-def test_build_response(server, query, expected):
-    server.address = "1.2.3.4"
-    response = server._build_response(query)
-    assert response == expected
