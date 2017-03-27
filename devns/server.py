@@ -4,7 +4,6 @@ from __future__ import (
 from builtins import *  # noqa
 
 import os
-import sys
 import socket
 import logging
 import functools
@@ -111,7 +110,10 @@ class DevNS(object):
                 "Could not determine a suitable response IP address. Please "
                 "specify one."
             )
-            sys.exit(1)
+            raise RuntimeError(
+                "Could not determine a suitable response IP address. Please "
+                "specify one."
+            )
         self._address = address
         self._encoded_address = "".join(
             map(lambda x: chr(int(x)), address.split('.'))
