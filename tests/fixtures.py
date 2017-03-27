@@ -5,6 +5,8 @@ import functools
 
 import devns
 
+from mock import MagicMock
+
 
 @pytest.fixture
 def config():
@@ -36,3 +38,22 @@ def resolver(config, server):
     for item in os.listdir(resolver):
         os.unlink(os.path.join(resolver, item))
     os.rmdir(resolver)
+
+
+class Connection(object):
+    def __init__(self, responses, expected):
+        self.responses = responses
+        self.expected = expected
+
+    settimeout = MagicMock()
+    bind = MagicMock()
+    sendto = MagicMock()
+
+    def getsockname(self):
+        return "0.0.0.0", 53535
+
+    def recvfrom(self, length):
+        response = self.responses.pop()
+        if isinstance(response, tuple):
+            return response
+        raise response()
