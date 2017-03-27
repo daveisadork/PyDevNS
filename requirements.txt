@@ -1,7 +1,7 @@
 codecov
 coverage
 future
-pytest
+pytest>=3.0
 pytest-cov
 pytest-runner
 six
