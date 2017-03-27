@@ -3,6 +3,7 @@ import sys
 import pytest
 import socket
 
+from mock import patch, MagicMock
 from .fixtures import *  # noqa
 from devns.server import _intify, DevNS
 
@@ -148,6 +149,209 @@ def test_server_address(server, address, encoded_address):
     server.address = address
     assert server.address == address
     assert server._encoded_address == encoded_address
+
+
+def test_server_get_address_by_hostname(server):
+    with patch("devns.server.socket") as socket_mock:
+        socket_mock.getfqdn = MagicMock(return_value="test.example.com")
+        socket_mock.gethostbyname = MagicMock(return_value="10.10.10.10")
+        address = server._get_address_by_hostname()
+        socket_mock.getfqdn.assert_called_once_with()
+        socket_mock.gethostbyname.assert_called_once_with("test.example.com")
+    assert address == "10.10.10.10"
+
+
+def test_server_get_address_by_hostname_error(server):
+    with patch("devns.server.socket") as socket_mock:
+        socket_mock.getfqdn = MagicMock(return_value="test.example.com")
+        socket_mock.gethostbyname = MagicMock(side_effect=socket.error)
+        address = server._get_address_by_hostname()
+        socket_mock.getfqdn.assert_called_once_with()
+        socket_mock.gethostbyname.assert_called_once_with("test.example.com")
+
+    assert address is None
+
+
+@pytest.mark.parametrize("ifconfig, expected", [
+    ("\n".join([
+        "lo0: flags=8049<UP,LOOPBACK,RUNNING,MULTICAST> mtu 16384",
+        "        options=1203<RXCSUM,TXCSUM,TXSTATUS,SW_TIMESTAMP>",
+        "        inet 127.0.0.1 netmask 0xff000000",
+        "        inet6 ::1 prefixlen 128",
+        "        inet6 fe80::1%lo0 prefixlen 64 scopeid 0x1",
+        "        nd6 options=201<PERFORMNUD,DAD>",
+        "gif0: flags=8010<POINTOPOINT,MULTICAST> mtu 1280",
+        "stf0: flags=0<> mtu 1280",
+        "en0: flags=8863<UP,BROADCAST,SMART,RUNNING,SIMPLEX,MULTICAST> mtu 1500",  # noqa
+        "        ether a4:5e:60:ee:b9:55",
+        "        inet 10.10.10.10 netmask 0xffffff00 broadcast 10.10.10.255",
+        "        nd6 options=201<PERFORMNUD,DAD>",
+        "        media: autoselect",
+        "        status: active"
+    ]), "10.10.10.10"),
+    (b"\n".join([
+        b"lo0: flags=8049<UP,LOOPBACK,RUNNING,MULTICAST> mtu 16384",
+        b"        options=1203<RXCSUM,TXCSUM,TXSTATUS,SW_TIMESTAMP>",
+        b"        inet 127.0.0.1 netmask 0xff000000",
+        b"        inet6 ::1 prefixlen 128",
+        b"        inet6 fe80::1%lo0 prefixlen 64 scopeid 0x1",
+        b"        nd6 options=201<PERFORMNUD,DAD>",
+        b"gif0: flags=8010<POINTOPOINT,MULTICAST> mtu 1280",
+        b"stf0: flags=0<> mtu 1280",
+        b"en0: flags=8863<UP,BROADCAST,SMART,RUNNING,SIMPLEX,MULTICAST> mtu 1500",  # noqa
+        b"        ether a4:5e:60:ee:b9:55",
+        b"        inet 10.10.10.10 netmask 0xffffff00 broadcast 10.10.10.255",
+        b"        nd6 options=201<PERFORMNUD,DAD>",
+        b"        media: autoselect",
+        b"        status: active"
+    ]), "10.10.10.10"),
+    ("\n".join([
+        "br-27494a0950d6 Link encap:Ethernet  HWaddr 02:42:7f:e2:16:f6",
+        "          inet addr:172.19.0.1  Bcast:0.0.0.0  Mask:255.255.0.0",
+        "          UP BROADCAST MULTICAST  MTU:1500  Metric:1",
+        "          RX packets:0 errors:0 dropped:0 overruns:0 frame:0",
+        "          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0",
+        "          collisions:0 txqueuelen:0",
+        "          RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)",
+        "",
+        "br-279eacf22928 Link encap:Ethernet  HWaddr 02:42:d2:4f:90:98",
+        "          inet addr:172.20.0.1  Bcast:0.0.0.0  Mask:255.255.0.0",
+        "          UP BROADCAST MULTICAST  MTU:1500  Metric:1",
+        "          RX packets:0 errors:0 dropped:0 overruns:0 frame:0",
+        "          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0",
+        "          collisions:0 txqueuelen:0",
+        "          RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)",
+        "",
+        "br-6ce4900259e9 Link encap:Ethernet  HWaddr 02:42:7d:d4:e4:a3",
+        "          inet addr:172.18.0.1  Bcast:0.0.0.0  Mask:255.255.0.0",
+        "          UP BROADCAST MULTICAST  MTU:1500  Metric:1",
+        "          RX packets:0 errors:0 dropped:0 overruns:0 frame:0",
+        "          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0",
+        "          collisions:0 txqueuelen:0",
+        "          RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)",
+        "",
+        "docker0   Link encap:Ethernet  HWaddr 02:42:31:08:c9:7a",
+        "          inet addr:172.17.0.1  Bcast:0.0.0.0  Mask:255.255.0.0",
+        "          inet6 addr: fe80::42:31ff:fe08:c97a/64 Scope:Link",
+        "          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1",
+        "          RX packets:476239594 errors:0 dropped:0 overruns:0 frame:0",
+        "          TX packets:692721303 errors:0 dropped:0 overruns:0 carrier:0",  # noqa
+        "          collisions:0 txqueuelen:0",
+        "          RX bytes:40052256393 (40.0 GB)  TX bytes:1937960295820 (1.9 TB)",  # noqa
+        "",
+        "em1       Link encap:Ethernet  HWaddr d8:d3:85:5e:37:e6",
+        "          inet addr:10.10.10.49  Bcast:10.10.10.255  Mask:255.255.255.0",  # noqa
+        "          inet6 addr: fe80::dad3:85ff:fe5e:37e6/64 Scope:Link",
+        "          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1",
+        "          RX packets:2061109619 errors:2 dropped:0 overruns:2 frame:1",
+        "          TX packets:2093831600 errors:0 dropped:0 overruns:0 carrier:0",  # noqa
+        "          collisions:0 txqueuelen:1000",
+        "          RX bytes:2386493461462 (2.3 TB)  TX bytes:2245604822541 (2.2 TB)",  # noqa
+        "          Memory:c0400000-c041ffff",
+        "",
+        "lo        Link encap:Local Loopback",
+        "          inet addr:127.0.0.1  Mask:255.0.0.0",
+        "          inet6 addr: ::1/128 Scope:Host",
+        "          UP LOOPBACK RUNNING  MTU:65536  Metric:1",
+        "          RX packets:150372537 errors:0 dropped:0 overruns:0 frame:0",
+        "          TX packets:150372537 errors:0 dropped:0 overruns:0 carrier:0",  # noqa
+        "          collisions:0 txqueuelen:1",
+        "          RX bytes:91406483840 (91.4 GB)  TX bytes:91406483840 (91.4 GB)",  # noqa
+        "",
+        "lxcbr0    Link encap:Ethernet  HWaddr 00:16:3e:00:00:00",
+        "          inet addr:10.0.3.1  Bcast:0.0.0.0  Mask:255.255.255.0",
+        "          UP BROADCAST MULTICAST  MTU:1500  Metric:1",
+        "          RX packets:0 errors:0 dropped:0 overruns:0 frame:0",
+        "          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0",
+        "          collisions:0 txqueuelen:1000",
+        "          RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)",
+        "",
+        "veth5819543 Link encap:Ethernet  HWaddr 96:66:95:e3:b2:24",
+        "          inet6 addr: fe80::9466:95ff:fee3:b224/64 Scope:Link",
+        "          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1",
+        "          RX packets:398508 errors:0 dropped:0 overruns:0 frame:0",
+        "          TX packets:2606383 errors:0 dropped:0 overruns:0 carrier:0",
+        "          collisions:0 txqueuelen:0",
+        "          RX bytes:22700793 (22.7 MB)  TX bytes:299182613 (299.1 MB)",
+        ""
+    ]), "10.10.10.49"),
+    (b"\n".join([
+        b"br-27494a0950d6 Link encap:Ethernet  HWaddr 02:42:7f:e2:16:f6",
+        b"          inet addr:172.19.0.1  Bcast:0.0.0.0  Mask:255.255.0.0",
+        b"          UP BROADCAST MULTICAST  MTU:1500  Metric:1",
+        b"          RX packets:0 errors:0 dropped:0 overruns:0 frame:0",
+        b"          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0",
+        b"          collisions:0 txqueuelen:0",
+        b"          RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)",
+        b"",
+        b"br-279eacf22928 Link encap:Ethernet  HWaddr 02:42:d2:4f:90:98",
+        b"          inet addr:172.20.0.1  Bcast:0.0.0.0  Mask:255.255.0.0",
+        b"          UP BROADCAST MULTICAST  MTU:1500  Metric:1",
+        b"          RX packets:0 errors:0 dropped:0 overruns:0 frame:0",
+        b"          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0",
+        b"          collisions:0 txqueuelen:0",
+        b"          RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)",
+        b"",
+        b"br-6ce4900259e9 Link encap:Ethernet  HWaddr 02:42:7d:d4:e4:a3",
+        b"          inet addr:172.18.0.1  Bcast:0.0.0.0  Mask:255.255.0.0",
+        b"          UP BROADCAST MULTICAST  MTU:1500  Metric:1",
+        b"          RX packets:0 errors:0 dropped:0 overruns:0 frame:0",
+        b"          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0",
+        b"          collisions:0 txqueuelen:0",
+        b"          RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)",
+        b"",
+        b"docker0   Link encap:Ethernet  HWaddr 02:42:31:08:c9:7a",
+        b"          inet addr:172.17.0.1  Bcast:0.0.0.0  Mask:255.255.0.0",
+        b"          inet6 addr: fe80::42:31ff:fe08:c97a/64 Scope:Link",
+        b"          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1",
+        b"          RX packets:476239594 errors:0 dropped:0 overruns:0 frame:0",
+        b"          TX packets:692721303 errors:0 dropped:0 overruns:0 carrier:0",  # noqa
+        b"          collisions:0 txqueuelen:0",
+        b"          RX bytes:40052256393 (40.0 GB)  TX bytes:1937960295820 (1.9 TB)",  # noqa
+        b"",
+        b"em1       Link encap:Ethernet  HWaddr d8:d3:85:5e:37:e6",
+        b"          inet addr:10.10.10.49  Bcast:10.10.10.255  Mask:255.255.255.0",  # noqa
+        b"          inet6 addr: fe80::dad3:85ff:fe5e:37e6/64 Scope:Link",
+        b"          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1",
+        b"          RX packets:2061109619 errors:2 dropped:0 overruns:2 frame:1",  # noqa
+        b"          TX packets:2093831600 errors:0 dropped:0 overruns:0 carrier:0",  # noqa
+        b"          collisions:0 txqueuelen:1000",
+        b"          RX bytes:2386493461462 (2.3 TB)  TX bytes:2245604822541 (2.2 TB)",  # noqa
+        b"          Memory:c0400000-c041ffff",
+        b"",
+        b"lo        Link encap:Local Loopback",
+        b"          inet addr:127.0.0.1  Mask:255.0.0.0",
+        b"          inet6 addr: ::1/128 Scope:Host",
+        b"          UP LOOPBACK RUNNING  MTU:65536  Metric:1",
+        b"          RX packets:150372537 errors:0 dropped:0 overruns:0 frame:0",
+        b"          TX packets:150372537 errors:0 dropped:0 overruns:0 carrier:0",  # noqa
+        b"          collisions:0 txqueuelen:1",
+        b"          RX bytes:91406483840 (91.4 GB)  TX bytes:91406483840 (91.4 GB)",  # noqa
+        b"",
+        b"lxcbr0    Link encap:Ethernet  HWaddr 00:16:3e:00:00:00",
+        b"          inet addr:10.0.3.1  Bcast:0.0.0.0  Mask:255.255.255.0",
+        b"          UP BROADCAST MULTICAST  MTU:1500  Metric:1",
+        b"          RX packets:0 errors:0 dropped:0 overruns:0 frame:0",
+        b"          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0",
+        b"          collisions:0 txqueuelen:1000",
+        b"          RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)",
+        b"",
+        b"veth5819543 Link encap:Ethernet  HWaddr 96:66:95:e3:b2:24",
+        b"          inet6 addr: fe80::9466:95ff:fee3:b224/64 Scope:Link",
+        b"          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1",
+        b"          RX packets:398508 errors:0 dropped:0 overruns:0 frame:0",
+        b"          TX packets:2606383 errors:0 dropped:0 overruns:0 carrier:0",
+        b"          collisions:0 txqueuelen:0",
+        b"          RX bytes:22700793 (22.7 MB)  TX bytes:299182613 (299.1 MB)",
+        b""
+    ]), "10.10.10.49"),
+])
+def test_server_get_address_by_ifconfig(server, ifconfig, expected):
+    with patch("devns.server.subprocess") as subprocess:
+        subprocess.check_output = MagicMock(return_value=ifconfig)
+        address = server._get_address_by_ifconfig()
+        subprocess.check_output.assert_called_once_with(("ifconfig", ))
+    assert address == expected
 
 
 @pytest.mark.parametrize("addresses, address", [
