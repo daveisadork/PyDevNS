@@ -3,8 +3,8 @@ import sys
 import pytest
 import socket
 
-from mock import patch, MagicMock
 from .fixtures import *  # noqa
+from mock import patch, MagicMock
 from devns.server import _intify, DevNS
 
 
@@ -213,10 +213,77 @@ def test_server_choose_address(server, addresses, address):
         None
     ),
 ])
-def test_build_response(server, query, expected):
+def test_server_build_response(server, query, expected):
     server.address = "1.2.3.4"
     response = server._build_response(query)
     assert response == expected
+
+
+@pytest.mark.parametrize("query, expected", [
+    (
+        b"\x96\xd1\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00\x05local\x03dev\x00\x00\x01\x00\x01",  # noqa
+        b"\x96\xd1\x81\x80\x00\x01\x00\x01\x00\x00\x00\x00\x05local\x03dev\x00\x00\x01\x00\x01\xc0\x0c\x00\x01\x00\x01\x00\x00\x00<\x00\x04\x01\x02\x03\x04"  # noqa
+    ), # noqa
+    (
+        b"Kj\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00\x04test\x05local\x03dev\x00\x00\x01\x00\x01",  # noqa
+        b"Kj\x81\x80\x00\x01\x00\x01\x00\x00\x00\x00\x04test\x05local\x03dev\x00\x00\x01\x00\x01\xc0\x0c\x00\x01\x00\x01\x00\x00\x00<\x00\x04\x01\x02\x03\x04" # noqa
+    ),
+    (
+        b"\x96\xd1\x50\x00\x00\x01\x00\x00\x00\x00\x00\x00\x05local\x03dev\x00\x00\x01\x00\x01", # noqa
+        None
+    ),
+])
+def test_server_listen(config, server, query, expected):
+    server.address = "1.2.3.4"
+
+    server.connection = Connection([
+        KeyboardInterrupt,
+        (query, ("127.0.0.1", 5000)),
+        socket.error,
+        (query, ("127.0.0.1", 5000)),
+        socket.error
+    ], expected)
+
+    assert pytest.raises(KeyboardInterrupt, server._listen)
+
+
+@pytest.mark.parametrize("query, expected", [
+    (
+        b"\x96\xd1\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00\x05local\x03dev\x00\x00\x01\x00\x01",  # noqa
+        b"\x96\xd1\x81\x80\x00\x01\x00\x01\x00\x00\x00\x00\x05local\x03dev\x00\x00\x01\x00\x01\xc0\x0c\x00\x01\x00\x01\x00\x00\x00<\x00\x04\x01\x02\x03\x04"  # noqa
+    ), # noqa
+    (
+        b"Kj\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00\x04test\x05local\x03dev\x00\x00\x01\x00\x01",  # noqa
+        b"Kj\x81\x80\x00\x01\x00\x01\x00\x00\x00\x00\x04test\x05local\x03dev\x00\x00\x01\x00\x01\xc0\x0c\x00\x01\x00\x01\x00\x00\x00<\x00\x04\x01\x02\x03\x04" # noqa
+    ),
+    (
+        b"\x96\xd1\x50\x00\x00\x01\x00\x00\x00\x00\x00\x00\x05local\x03dev\x00\x00\x01\x00\x01", # noqa
+        None
+    ),
+])
+def test_server_run(config, server, query, expected):
+    config.resolver = False
+    server.address = "1.2.3.4"
+    connection = Connection([
+        KeyboardInterrupt,
+        (query, ("127.0.0.1", 5000)),
+        socket.error
+    ], expected)
+
+    with patch("devns.server.socket.socket") as socket_mock:
+        socket_mock.return_value = connection
+        assert server.run() == 0
+
+
+def test_server_run_bind_failure(config, server):
+    config.port = ""
+    assert server.run() == 2
+
+
+def test_server_run_resolver_failure(server, resolver):
+    os.chmod(resolver, 400)
+    assert server.run() == 3
+    os.chmod(resolver, 777)
 
 
 @pytest.mark.parametrize("ifconfig, expected", [
