@@ -176,7 +176,7 @@ class DevNS(object):
         ))
 
     def _listen(self):
-        self.address = config.address
+        self.address = self.config.address
         logger.debug(
             "Ready to reply to incoming requests with %s", self.address
         )
