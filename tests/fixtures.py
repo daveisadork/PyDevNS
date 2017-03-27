@@ -1,3 +1,4 @@
+import os
 import pytest
 import logging
 import functools
@@ -23,3 +24,15 @@ def parse_args(config):
 @pytest.fixture
 def server(config):
     return devns.server.DevNS(config)
+
+
+@pytest.fixture
+def resolver(config, server):
+    resolver = os.path.abspath("./resolver")
+    if not os.path.isdir(resolver):
+        os.mkdir(resolver)
+    config.resolver_dir = resolver
+    yield resolver
+    for item in os.listdir(resolver):
+        os.unlink(os.path.join(resolver, item))
+    os.rmdir(resolver)

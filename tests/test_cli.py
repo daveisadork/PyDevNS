@@ -1,4 +1,5 @@
 import pytest
+import subprocess
 
 from .fixtures import *  # noqa
 
@@ -55,6 +56,15 @@ def test_parse_args_resolver(parse_args, config, args, resolver):
     assert config.resolver == resolver
 
 
+@pytest.mark.parametrize("args, resolver_dir", [
+    ([], "/etc/resolver"),
+    (["--resolver-dir", "/usr/local/etc/resolver"], "/usr/local/etc/resolver"),
+])
+def test_parse_args_resolver_dir(parse_args, config, args, resolver_dir):
+    parse_args(args)
+    assert config.resolver_dir == resolver_dir
+
+
 @pytest.mark.parametrize(
     "args, level", [
         ([], 40),
@@ -67,3 +77,7 @@ def test_parse_args_resolver(parse_args, config, args, resolver):
 def test_parse_args_verbosity(parse_args, config, logger, args, level):
     parse_args(args)
     assert config.log_level == level
+
+
+def test_executing_as_a_module(parse_args):
+    assert subprocess.check_call(("python", "-m", "devns.__main__", "-h")) == 0

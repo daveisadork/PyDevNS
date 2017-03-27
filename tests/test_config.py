@@ -54,6 +54,15 @@ def test_config_resolver(config, resolver):
     assert config.resolver == resolver
 
 
+@pytest.mark.parametrize("resolver_dir", [
+    "/usr/local/etc/resolver",
+    "~/.config/resolver",
+])
+def test_parse_args_resolver_dir(config, resolver_dir):
+    config.resolver_dir = resolver_dir
+    assert config.resolver_dir == resolver_dir
+
+
 @pytest.mark.parametrize(
     "verbosity, level", [(0, 40), (1, 30), (2, 20), (3, 10)]
 )
