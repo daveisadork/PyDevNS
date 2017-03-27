@@ -23,6 +23,7 @@ def interruptable(func):
             return func(*args, **kwargs)
         except KeyboardInterrupt:
             logger.info("User pressed Control+C, shutting down")
+            return 0
 
     return decorator
 
