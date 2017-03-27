@@ -43,6 +43,9 @@ class DevNS(object):
     def _choose_address(self, addresses):
         logger.debug("Selecting the best IP from candidates %r", addresses)
         possible = []
+        if not isinstance(addresses, list):
+            addresses = [addresses]
+
         for address in addresses:
             try:
                 ip = [int(p) for p in address.split(".")]
@@ -57,26 +60,25 @@ class DevNS(object):
                 logger.debug("Considering %s", address)
             except:
                 logger.debug("Skipping %s", address)
-        try:
-            address = ".".join((
-                str(part) for part in sorted(
-                    possible,
-                    key=lambda p: "{0}-{0}".format(
-                        0 if p[0] == 127 else 1, p[-1]
-                    )
-                )[-1]
-            ))
+        possible = [".".join([str(part) for part in parts]) for parts in sorted(
+            possible,
+            key=lambda p: "{0}-{1}".format(
+                0 if p[0] == 127 else 1, p[-1]
+            )
+        )]
+        if possible:
+            address = possible[-1]
             logger.debug("Selected IP address %s", address)
             return address
-        except:
+        else:
             logger.warning("Found no suitable IP addresses in %r", addresses)
 
     def _get_address_by_hostname(self):
-        logger.debug("Attempting to determine response IP from hostname")
-        hostname = socket.getfqdn()
-        logger.debug("Resolving hostname %r", hostname)
         try:
-            return self._choose_address(socket.gethostbyname_ex(hostname)[2])
+            logger.debug("Attempting to determine response IP from hostname")
+            hostname = socket.getfqdn()
+            logger.debug("Resolving hostname %r", hostname)
+            return self._choose_address(socket.gethostbyname(hostname))
         except Exception as e:
             logger.warning("Unable to resolve %r: %s", hostname, e)
 
@@ -84,7 +86,9 @@ class DevNS(object):
         logger.debug("Attempting to determine response IP from ifconfig")
         addresses = []
         output = subprocess.check_output(("ifconfig", ))
-        for line in output.split(b"\n"):
+        if not isinstance(output, str):
+            output = output.decode("latin-1")
+        for line in output.split("\n"):
             try:
                 parts = line.strip().split(" ")
                 assert parts[0] == "inet"
