@@ -214,7 +214,7 @@ def test_server_choose_address(server, addresses, address):
     ),
 ])
 def test_server_build_response(server, query, expected):
-    config.address = "1.2.3.4"
+    config.address = server.address = "1.2.3.4"
     response = server._build_response(query)
     assert response == expected
 
@@ -234,7 +234,7 @@ def test_server_build_response(server, query, expected):
     ),
 ])
 def test_server_listen(config, server, query, expected):
-    config.address = "1.2.3.4"
+    config.address = server.address = "1.2.3.4"
 
     server.connection = Connection([
         KeyboardInterrupt,
@@ -263,7 +263,7 @@ def test_server_listen(config, server, query, expected):
 ])
 def test_server_run(config, server, query, expected):
     config.resolver = False
-    server.address = "1.2.3.4"
+    config.address = server.address = "1.2.3.4"
     connection = Connection([
         KeyboardInterrupt,
         (query, ("127.0.0.1", 5000)),
