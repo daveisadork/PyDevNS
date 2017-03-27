@@ -17,6 +17,7 @@ class Config(object):
         log_level=logging.ERROR,
         port=0,
         resolver=True,
+        resolver_dir="/etc/resolver",
         verbosity=0,
     )
 
@@ -94,6 +95,15 @@ class Config(object):
     def resolver(self, resolver):
         logger.debug("Setting config.resolver to %r", resolver)
         self._data["resolver"] = resolver
+
+    @property
+    def resolver_dir(self):
+        return self._data.get("resolver_dir", self.DEFAULTS["resolver_dir"])
+
+    @resolver_dir.setter
+    def resolver_dir(self, resolver_dir):
+        logger.debug("Setting config.resolver_dir to %r", resolver_dir)
+        self._data["resolver_dir"] = resolver_dir
 
     @property
     def verbosity(self):

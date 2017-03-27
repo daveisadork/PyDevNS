@@ -17,19 +17,27 @@ def parse_args(args=None, config=config):
         dest="log_level", help="quiet mode"
     )
 
-    parser.add_argument("--host", type=str, help="address to listen on")
-    parser.add_argument("--port", type=int, help="port to listen on")
+    listen = parser.add_argument_group()
+    listen.add_argument("--host", type=str, help="address to listen on")
+    listen.add_argument("--port", type=int, help="port to listen on")
+
     parser.add_argument(
         "--address", type=str, help="IP address to respond with"
     )
+
     resolver_group = parser.add_mutually_exclusive_group()
     resolver_group.add_argument(
         "--no-resolver", "-nr", action="store_false", dest="resolver",
-        help="don't put files in /etc/resolver"
+        help="disable creating resolver files"
     )
-    resolver_group.add_argument(
+    resolver_config = resolver_group.add_argument_group()
+    resolver_config.add_argument(
         "--domains", type=str, nargs="*", metavar="DOMAIN",
-        help='domains to create resolver files for'
+        help="domains to create resolver files for"
+    )
+    resolver_config.add_argument(
+        "--resolver-dir", type=str, metavar="DIRECTORY", dest="resolver_dir",
+        help="where to put resolver files"
     )
 
     parser.set_defaults(**config.DEFAULTS)
