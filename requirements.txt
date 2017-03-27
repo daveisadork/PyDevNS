@@ -1,6 +1,7 @@
 codecov
 coverage
 future
+mock
 pytest>=3.0
 pytest-cov
 pytest-runner
