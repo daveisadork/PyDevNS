@@ -22,6 +22,6 @@ deploy:
   on:
     tags: true
     python: "3.6"
-    distributions: sdist bdist_wheel
+    distributions: "sdist bdist bdist_wheel"
     repo: daveisadork/PyDevNS
   skip_upload_docs: true
