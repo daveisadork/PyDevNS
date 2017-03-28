@@ -17,9 +17,13 @@ def parse_args(args=None, config=config):
         dest="log_level", help="quiet mode"
     )
 
-    general = parser.add_argument_group("General")
-    general.add_argument(
+    address_group = parser.add_mutually_exclusive_group()
+    address_group.add_argument(
         "--address", type=str, help="IP address to respond with"
+    )
+    address_group.add_argument(
+        "--ttl", type=int, metavar="SECONDS",
+        help="how often to refresh the address"
     )
 
     listen = parser.add_argument_group("Network")

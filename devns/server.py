@@ -8,6 +8,7 @@ import socket
 import logging
 import functools
 import subprocess
+from datetime import datetime
 
 from . import config, DNS
 from contextlib import contextmanager
@@ -39,6 +40,8 @@ class DevNS(object):
         self.config = config
         self.config.update(kwargs)
         self.connection = None
+        self._address = None
+        self._address_last_updated = datetime.utcnow()
 
     def _choose_address(self, addresses):
         logger.debug("Selecting the best IP from candidates %r", addresses)
@@ -99,7 +102,19 @@ class DevNS(object):
         return self._choose_address(addresses)
 
     @property
+    def _address_age(self):
+        if self.config.address:
+            return 0
+        return (datetime.utcnow() - self._address_last_updated).total_seconds()
+
+    @property
     def address(self):
+        if not self._address:
+            logger.debug("Address not set, refreshing")
+            self.address = self.config.address
+        elif self._address_age > self.config.ttl:
+            logger.debug("Address is stale, refreshing")
+            self.address = self.config.address
         return self._address
 
     @address.setter
@@ -119,6 +134,7 @@ class DevNS(object):
         self._encoded_address = "".join(
             map(lambda x: chr(int(x)), address.split('.'))
         ).encode("latin-1")
+        self._address_last_updated = datetime.utcnow()
 
     @contextmanager
     def bind(self):
@@ -179,7 +195,6 @@ class DevNS(object):
         ))
 
     def _listen(self):
-        self.address = self.config.address
         logger.debug(
             "Ready to reply to incoming requests with %s", self.address
         )

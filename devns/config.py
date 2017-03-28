@@ -18,6 +18,7 @@ class Config(object):
         port=0,
         resolver=True,
         resolver_dir="/etc/resolver",
+        ttl=300,
         verbosity=0,
     )
 
@@ -86,6 +87,15 @@ class Config(object):
     def port(self, port):
         logger.debug("Setting config.port to %r", port)
         self._data["port"] = port
+
+    @property
+    def ttl(self):
+        return self._data.get("ttl", self.DEFAULTS["ttl"])
+
+    @ttl.setter
+    def ttl(self, ttl):
+        logger.debug("Setting config.ttl to %r", ttl)
+        self._data["ttl"] = ttl
 
     @property
     def resolver(self):
