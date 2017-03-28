@@ -2,7 +2,7 @@ codecov
 coverage
 future
 mock>=2.0
-pytest>=2.9
+pytest>=2.9,<3
 pytest-cov
 pytest-runner
 six
