@@ -1,5 +1,5 @@
 codecov
-coverage
+coverage<4
 future
 mock>=2.0
 pytest>=2.9,<3

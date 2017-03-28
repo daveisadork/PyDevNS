@@ -25,7 +25,7 @@ setup(
     tests_require=[
         "future",
         "mock>=2.0",
-        "pytest>=3.0",
+        "pytest>=2.9,<3",
         "pytest-cov>=2.4",
         "pytest-runner",
         "six",
