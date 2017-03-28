@@ -29,7 +29,7 @@ def server(config):
     return devns.server.DevNS(config)
 
 
-@pytest.fixture
+@pytest.yield_fixture
 def resolver(config, server):
     resolver = os.path.abspath("./resolver")
     if not os.path.isdir(resolver):
