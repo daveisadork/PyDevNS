@@ -12,7 +12,7 @@ python:
   - "pypy"
   - "pypy3"
 # command to run tests
-script: py.test
+script: tox
 # command to install dependencies
 install: pip install -r requirements.txt
 after_success: coverage combine && codecov
