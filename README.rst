@@ -103,25 +103,24 @@ Here's what ``devns --help`` gets you:
 
 .. code-block::
 
-  usage: devns [-h] [--verbose | --quiet] [--address ADDRESS] [--host HOST]
-               [--port PORT] [--domains [DOMAIN [DOMAIN ...]]]
-               [--resolver-dir DIRECTORY] [--no-resolver]
+    usage: devns [-h] [--verbose | --quiet] [--address ADDRESS | --ttl SECONDS]
+                 [--host HOST] [--port PORT] [--domains [DOMAIN [DOMAIN ...]]]
+                 [--resolver-dir DIRECTORY] [--no-resolver]
 
-  optional arguments:
-    -h, --help            show this help message and exit
-    --verbose, -v         verbose output
-    --quiet, -q           quiet mode
+    optional arguments:
+      -h, --help            show this help message and exit
+      --verbose, -v         verbose output
+      --quiet, -q           quiet mode
+      --address ADDRESS     IP address to respond with
+      --ttl SECONDS         how often to refresh the address
 
-  General:
-    --address ADDRESS     IP address to respond with
+    Network:
+      --host HOST           address to listen on
+      --port PORT           port to listen on
 
-  Network:
-    --host HOST           address to listen on
-    --port PORT           port to listen on
-
-  Resolver:
-    --domains [DOMAIN [DOMAIN ...]]
-                          domains to create resolver files for
-    --resolver-dir DIRECTORY
-                          where to put resolver files
-    --no-resolver, -nr    disable creating resolver files
+    Resolver:
+      --domains [DOMAIN [DOMAIN ...]]
+                            domains to create resolver files for
+      --resolver-dir DIRECTORY
+                            where to put resolver files
+      --no-resolver, -nr    disable creating resolver files
