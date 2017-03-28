@@ -205,16 +205,18 @@ def test_server_get_address_by_hostname_error(server):
 
 
 def test_server_address_error(server):
-    with patch("devns.server.subprocess") as subprocess, \
-         patch("devns.server.socket") as socket_mock:
-        socket_mock.getfqdn = MagicMock(return_value="test.example.com")
-        socket_mock.gethostbyname = MagicMock(side_effect=socket.error)
-        subprocess.check_output = MagicMock(return_value="")
-        with pytest.raises(RuntimeError):
-            server.address = None
-        socket_mock.getfqdn.assert_called_once_with()
-        socket_mock.gethostbyname.assert_called_once_with("test.example.com")
-        subprocess.check_output.assert_called_once_with(("ifconfig", ))
+    with patch("devns.server.subprocess") as subprocess:
+        with patch("devns.server.socket") as socket_mock:
+            socket_mock.getfqdn = MagicMock(return_value="test.example.com")
+            socket_mock.gethostbyname = MagicMock(side_effect=socket.error)
+            subprocess.check_output = MagicMock(return_value="")
+            with pytest.raises(RuntimeError):
+                server.address = None
+            socket_mock.getfqdn.assert_called_once_with()
+            socket_mock.gethostbyname.assert_called_once_with(
+                "test.example.com"
+            )
+            subprocess.check_output.assert_called_once_with(("ifconfig", ))
 
 
 @pytest.mark.parametrize("addresses, address", [

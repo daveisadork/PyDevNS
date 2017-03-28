@@ -105,7 +105,8 @@ class DevNS(object):
     def _address_age(self):
         if self.config.address:
             return 0
-        return (datetime.utcnow() - self._address_last_updated).total_seconds()
+        delta = datetime.utcnow() - self._address_last_updated
+        return delta.days * 86400 + delta.seconds
 
     @property
     def address(self):
