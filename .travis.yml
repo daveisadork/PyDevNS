@@ -21,5 +21,7 @@ deploy:
     secure: swkFgFMN/52uTr5vWoTbxYFpMgmZmxtuy8Mp3CXP71jMyKkv/d9fL+x0mc+0tKGaNyTNyfbgeC4z1hyQrkjblPsm317k1kxV3Nr1VtLU/WBdfldujsklHU0PH061ihTeegNohnxG4m2+QiiecDLAmt8Okqe9fNbZjV6lZYVrELtYcSbv1TFLDHe8DmMh6+1psJSsJbjaR+Qzk/tocSCSakVeObqGKt/OsCQr3cdwn1eUeL6QUcaCqM0lg6/PNCsgn6bCCybjxzAplJtR6LVJ52SvgjNqb1UFr0HPIG7xDf0oTZE5/LBD4pNjI7QSE681bLiFhs7V7gwmhvnr2ba6oT+ylHo0PFQIccIVfDmOm1FtAUNXsYv4lb0GbTc3OR5xV6+3DS+bZL39ntK9vxF5kepyHySGEL7Y1/LkNLeot3LrS+vQ6RphtQvIBqhprMnei9G3YdmFYIMtEHX32VFisL8ID9bdlpYeVCsWRph4HBqRPPfpt+L66rYB9PxIzuWS2qZ82iRQjUq0GjM2rh/U7nhJohMmmrEFSZaQAvtb/kxXkgt5Rsp8KKTPm2vQd/RSp5PAOIclvjO+JXVj4BB/tUFj+CFEKr8g7TULywLclO6fYhco7zlnNIWkaK31Z3OiWziw7bwnrsAlU9RxlzZbnoCi6SOROPQ3UHabfgIPO+M=
   on:
     tags: true
+    python: "3.6"
     distributions: sdist bdist_wheel
     repo: daveisadork/PyDevNS
+  skip_upload_docs: true
