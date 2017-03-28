@@ -10,7 +10,6 @@ setup(
     author="Dave Hayes",
     author_email="dwhayes@gmail.com",
     description="Pure Python DNS server for developers",
-    long_description="file: README.rst",
     keywords="dns",
     license="MIT License",
     url="https://github.com/daveisadork/PyDevNS",
