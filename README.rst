@@ -1,6 +1,18 @@
 PyDevNS
 =======
 
+.. image:: https://img.shields.io/pypi/v/devns.svg
+    :target: https://pypi.python.org/pypi/devns
+
+.. image:: https://img.shields.io/pypi/l/devns.svg
+    :target: https://pypi.python.org/pypi/devns
+
+.. image:: https://img.shields.io/pypi/wheel/devns.svg
+    :target: https://pypi.python.org/pypi/devns
+
+.. image:: https://img.shields.io/pypi/pyversions/devns.svg
+    :target: https://pypi.python.org/pypi/devns
+
 .. image:: https://travis-ci.org/daveisadork/PyDevNS.svg?branch=master
     :target: https://travis-ci.org/daveisadork/PyDevNS
 
