@@ -38,7 +38,7 @@ config = Config()  # noqa
 
 
 __title__ = "devns"
-__version__ = "0.3.5"
+__version__ = "0.3.6"
 __author__ = "Dave Hayes"
 __license__ = "MIT"
 __copyright__ = "Copyright (c) 2017 Dave Hayes"
