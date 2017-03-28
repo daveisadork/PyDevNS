@@ -6,6 +6,6 @@ pytest>=3.0
 pytest-cov
 pytest-runner
 six
-tox
-tox-travis
+tox>=2.6
+tox-travis>=0.8
 wheel
