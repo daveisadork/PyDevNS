@@ -64,11 +64,7 @@ def test_server_bind_error(config, server, host, port):
     config.host = host
     config.port = port
     with server.bind() as connection:
-        try:
-            assert isinstance(connection, Exception)
-        except:
-            print(connection.getsockname())
-            raise
+        assert isinstance(connection, Exception)
 
 
 @pytest.mark.skipif(sys.version_info < (2, 7), reason="Old Python")

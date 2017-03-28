@@ -36,8 +36,6 @@ def resolver(config, server):
         os.mkdir(resolver)
     config.resolver_dir = resolver
     yield resolver
-    for item in os.listdir(resolver):
-        os.unlink(os.path.join(resolver, item))
     os.rmdir(resolver)
 
 
