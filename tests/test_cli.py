@@ -46,6 +46,12 @@ def test_parse_args_port(parse_args, config, port):
     assert config.port == int(port)
 
 
+@pytest.mark.parametrize("ttl", ("60", "600", "3600"))
+def test_parse_args_ttl(parse_args, config, ttl):
+    parse_args(["--ttl", ttl])
+    assert config.ttl == int(ttl)
+
+
 @pytest.mark.parametrize("args, resolver", [
     ([], True),
     (["--no-resolver"], False),

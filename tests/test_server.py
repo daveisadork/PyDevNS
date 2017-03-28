@@ -4,6 +4,7 @@ import pytest
 import socket
 
 from .fixtures import *  # noqa
+from datetime import timedelta
 from mock import patch, MagicMock
 from devns.server import _intify, DevNS
 
@@ -149,6 +150,37 @@ def test_server_address(server, address, encoded_address):
     server.address = address
     assert server.address == address
     assert server._encoded_address == encoded_address
+
+
+@pytest.mark.parametrize("address, encoded_address", [
+    ("0.0.0.0", b"\x00\x00\x00\x00"),
+    ("127.0.0.1", b"\x7f\x00\x00\x01"),
+    ("1.2.3.4", b"\x01\x02\x03\x04")
+])
+def test_server_address_ttl(server, address, encoded_address):
+    server.address = "1.2.3.4"
+    server._address_last_updated -= timedelta(seconds=server.config.ttl + 5)
+    last_updated = server._address_last_updated
+    with patch("devns.server.DevNS._get_address_by_ifconfig") as ifconfig:
+        ifconfig.return_value = address
+        assert server.address == address
+        assert server._encoded_address == encoded_address
+        assert server._address_last_updated > last_updated
+        ifconfig.assert_called_once()
+
+
+@pytest.mark.parametrize("address, encoded_address", [
+    ("0.0.0.0", b"\x00\x00\x00\x00"),
+    ("127.0.0.1", b"\x7f\x00\x00\x01"),
+    ("1.2.3.4", b"\x01\x02\x03\x04")
+])
+def test_server_ttl_config_address(server, address, encoded_address):
+    server.config.address = address
+    with patch("devns.server.DevNS._get_address_by_ifconfig") as ifconfig:
+        assert server.address == address
+        assert server._encoded_address == encoded_address
+        assert server._address_age == 0
+        ifconfig.assert_not_called()
 
 
 def test_server_get_address_by_hostname(server):

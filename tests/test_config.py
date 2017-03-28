@@ -48,6 +48,12 @@ def test_config_port(config, port):
     assert config.port == port
 
 
+@pytest.mark.parametrize("ttl", (60, 600, 3600))
+def test_config_ttl(config, ttl):
+    config.ttl = ttl
+    assert config.ttl == ttl
+
+
 @pytest.mark.parametrize("resolver", (True, False))
 def test_config_resolver(config, resolver):
     config.resolver = resolver

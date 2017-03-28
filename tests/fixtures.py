@@ -25,6 +25,7 @@ def parse_args(config):
 
 @pytest.fixture
 def server(config):
+    config.resolver_dir = os.path.abspath("./_resolver")
     return devns.server.DevNS(config)
 
 
