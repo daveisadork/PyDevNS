@@ -76,11 +76,7 @@ def test_server_bind_error_bad_port(config, server, host, port):
     config.host = host
     config.port = port
     with server.bind() as connection:
-        try:
-            assert isinstance(connection, Exception)
-        except:
-            print(connection.getsockname())
-            raise
+        assert isinstance(connection, Exception)
 
 
 @pytest.mark.parametrize("domains", [("dev", ), ("dev", "local.co")])
