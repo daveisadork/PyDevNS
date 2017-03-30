@@ -119,24 +119,34 @@ Here's what ``devns --help`` gets you:
 
 .. code-block::
 
-    usage: devns [-h] [--verbose | --quiet] [--address ADDRESS | --ttl SECONDS]
-                 [--host HOST] [--port PORT] [--domains [DOMAIN [DOMAIN ...]]]
-                 [--resolver-dir DIRECTORY] [--no-resolver]
+    usage: devns [-h] [--version] [--verbose | --quiet]
+                 [--address ADDRESS | --ttl SECONDS] [--host HOST] [--port PORT]
+                 [--domains [DOMAIN [DOMAIN ...]]] [--resolver-dir DIRECTORY]
+                 [--no-resolver]
+
+    PyDevNS - A DNS server for developers.
 
     optional arguments:
       -h, --help            show this help message and exit
+      --version             show version and exit
+
+    Logging:
       --verbose, -v         verbose output
       --quiet, -q           quiet mode
-      --address ADDRESS     IP address to respond with
-      --ttl SECONDS         how often to refresh the address
+
+    Address:
+      --address ADDRESS, -a ADDRESS
+                            IP address to respond with
+      --ttl SECONDS, -t SECONDS
+                            how often to refresh the address
 
     Network:
-      --host HOST           address to listen on
-      --port PORT           port to listen on
+      --host HOST, -H HOST  address to listen on
+      --port PORT, -p PORT  port to listen on
 
     Resolver:
-      --domains [DOMAIN [DOMAIN ...]]
+      --domains [DOMAIN [DOMAIN ...]], -d [DOMAIN [DOMAIN ...]]
                             domains to create resolver files for
-      --resolver-dir DIRECTORY
+      --resolver-dir DIRECTORY, -rd DIRECTORY
                             where to put resolver files
       --no-resolver, -nr    disable creating resolver files
