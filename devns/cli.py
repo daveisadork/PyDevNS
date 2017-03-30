@@ -1,3 +1,4 @@
+import sys
 import logging
 import argparse
 
@@ -48,6 +49,9 @@ def parse_args(args=None, config=config):
     return parser.parse_args(args, namespace=config)
 
 
-def main():  # pragma no cover
-    app = DevNS(parse_args())
-    return app.run()
+def main():
+    return DevNS(parse_args()).run()
+
+
+if __name__ == "__main__":
+    sys.exit(main())
