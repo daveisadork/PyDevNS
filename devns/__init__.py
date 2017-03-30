@@ -45,4 +45,3 @@ __copyright__ = "Copyright (c) 2017 Dave Hayes"
 
 from .dns import DNS  # noqa
 from . import server  # noqa
-from . import cli  # noqa
