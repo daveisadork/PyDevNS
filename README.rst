@@ -23,13 +23,13 @@ PyDevNS is a pure Python DNS server for developers. You know how you need
 a domain name to use for interacting with your app locally? Well, this is the
 tool for you.
 
-----------
-
-I know what you're thinking
+Rationale
+---------
+I know what you're thinking:
 
    Dude, what? I just put ``local.dev`` in my ``/etc/hosts`` file.
 
-Well, that's all well and good, but what about when you need ``local.dev`` and
+That's all well and good, but what about when you need ``local.dev`` and
 ``*.local.co``?
 
    There's like a million things out there that do this. I could use
@@ -74,6 +74,13 @@ Run it with ``sudo`` to do that? Yeah probably, unless your system is insane
 and just lets anybody write to ``/etc`` all willy nilly, in which case you have
 bigger problems than getting ``local.dev`` to resolve to something sensible.
 
+   Don't I have to restart it every time my IP changes, just like ``dnsmasq``?
+
+No, there's a configurable TTL associated with the address ``devns`` uses in
+its responses. By default, that's 5 minutes. If a query comes in and the
+address was last confirmed more than 5 minutes prior, it'll try to rediscover
+it. That should cover most cases of relocating from one spot to another.
+
 Examples
 --------
 Run the server with a random port and auto-configured resolver for ``.dev``
@@ -81,24 +88,33 @@ resolving to a sensible, auto-detected IP address:
 
    ``sudo devns``
 
-Listen on port 53535 without writing any resolver files:
+Rediscover the response address every 15 minutes instead of 5:
+
+   ``sudo devns --ttl 900``
+
+Listen on port ``53535`` without writing any resolver files:
 
   ``devns --port 53535 --no-resolver``
 
-Respond with a specific IP every time instead of an auto discovered one:
+Write the resolver files to ``/usr/local/etc/resolver`` instead of
+``/etc/resolver``:
+
+  ``devns --resolver-dir /usr/local/etc/resolver``
+
+Respond to all queries with ``172.24.3.1``, and ignore the TTL:
 
   ``sudo devns --address 172.24.3.1``
 
-Listen on port 53535, write config files for `.dev` and `.local.co`:
+Listen on port ``53535``, write config files for ``.dev`` and ``.local.co``:
 
   ``sudo devns --port 53535 --domains dev local.co``
 
-Bind to a random port on `127.0.0.1`, and make a lot of noise:
+Bind to a random port on ``127.0.0.1``, and make a lot of noise:
 
    ``sudo devns --host 127.0.0.1 -vvv``
 
-----------
-
+Usage
+-----
 Here's what ``devns --help`` gets you:
 
 .. code-block::
