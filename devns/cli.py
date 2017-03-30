@@ -59,9 +59,9 @@ def parse_args(args=None, config=config):
     return parser.parse_args(args, namespace=config)
 
 
-def main():
+def main():  # pragma: no cover
     return DevNS(parse_args()).run()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     sys.exit(main())
