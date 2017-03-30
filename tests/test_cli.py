@@ -86,4 +86,6 @@ def test_parse_args_verbosity(parse_args, config, logger, args, level):
 
 
 def test_executing_as_a_module(parse_args):
-    assert subprocess.check_call(("python", "-m", "devns.cli", "-h")) == 0
+    assert subprocess.check_call(
+        ("python", "-m", "devns.cli", "--version")
+    ) == 0

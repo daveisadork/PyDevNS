@@ -4,6 +4,7 @@ import logging
 import functools
 
 import devns
+import devns.cli
 
 from mock import MagicMock
 
