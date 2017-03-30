@@ -120,6 +120,11 @@ Bind to a random port on ``127.0.0.1``, and make a lot of noise:
 
    ``sudo devns --host 127.0.0.1 -vvv``
 
+Notes/Caveats
+-------------
+If you have entries in your ``/etc/hosts`` for any domains you want to use with
+``devns``, you'll have to remove those. That's all.
+
 Usage
 -----
 Here's what ``devns --help`` gets you:
