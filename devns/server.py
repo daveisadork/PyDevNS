@@ -199,6 +199,7 @@ class DevNS(object):
         logger.debug(
             "Ready to reply to incoming requests with %s", self.address
         )
+        print("Listening on {}:{}".format(*self.connection.getsockname()))
         while True:
             try:
                 query, client = self.connection.recvfrom(1024)
