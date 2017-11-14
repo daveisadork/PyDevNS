@@ -1,8 +1,6 @@
 import pytest
 import subprocess
 
-from .fixtures import *  # noqa
-
 
 @pytest.mark.parametrize("address", ("127.0.0.1", "10.10.10.10"))
 def test_parse_args_address(parse_args, config, address):

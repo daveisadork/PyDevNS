@@ -3,9 +3,9 @@ import sys
 import pytest
 import socket
 
-from .fixtures import *  # noqa
 from datetime import timedelta
 from mock import patch, MagicMock
+
 from devns.server import _intify, DevNS
 
 

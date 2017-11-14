@@ -1,6 +1,5 @@
 import pytest
 
-from .fixtures import *  # noqa
 from six import iteritems
 
 
