@@ -20,7 +20,7 @@ def resolver_dir(config):
     resolvers = []
     config.resolver_dir = os.path.join(
         tempfile.gettempdir(),
-        "{}-{}".format(tempfile.gettempprefix(), "resolver")
+        "{0}-{1}".format(tempfile.gettempprefix(), "resolver")
     )
     resolvers.append(config.resolver_dir)
     yield config.resolver_dir
