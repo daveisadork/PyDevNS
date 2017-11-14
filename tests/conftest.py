@@ -1,7 +1,8 @@
+import functools
+import logging
 import os
 import pytest
-import logging
-import functools
+import tempfile
 
 import devns
 import devns.cli
@@ -14,6 +15,21 @@ def config():
     return devns.Config()
 
 
+@pytest.yield_fixture
+def resolver_dir(config):
+    resolvers = []
+    config.resolver_dir = os.path.join(
+        tempfile.gettempdir(),
+        "{}-{}".format(tempfile.gettempprefix(), "resolver")
+    )
+    resolvers.append(config.resolver_dir)
+    yield config.resolver_dir
+    resolvers.append(config.resolver_dir)
+    for resolver in filter(None, set(resolvers)):
+        if os.path.isdir(resolver):
+            os.rmdir(resolver)
+
+
 @pytest.fixture
 def logger(request):
     return logging.getLogger(request.node.nodeid)
@@ -24,36 +40,29 @@ def parse_args(config):
     return functools.partial(devns.cli.parse_args, config=config)
 
 
-@pytest.fixture
-def server(config):
-    config.resolver_dir = os.path.abspath("./_resolver")
-    return devns.server.DevNS(config)
-
-
 @pytest.yield_fixture
-def resolver(config, server):
-    resolver = os.path.abspath("./resolver")
-    if not os.path.isdir(resolver):
-        os.mkdir(resolver)
-    config.resolver_dir = resolver
-    yield resolver
-    os.rmdir(resolver)
+def server(config, resolver_dir):
+    yield devns.server.DevNS(config)
 
 
-class Connection(object):
-    def __init__(self, responses, expected):
-        self.responses = responses
-        self.expected = expected
+@pytest.fixture
+def Connection():
+    class Connection(object):
+        settimeout = MagicMock()
+        bind = MagicMock()
+        sendto = MagicMock()
 
-    settimeout = MagicMock()
-    bind = MagicMock()
-    sendto = MagicMock()
+        def __init__(self, responses, expected):
+            self.responses = responses
+            self.expected = expected
 
-    def getsockname(self):
-        return "0.0.0.0", 53535
+        def getsockname(self):
+            return "0.0.0.0", 53535
 
-    def recvfrom(self, length):
-        response = self.responses.pop()
-        if isinstance(response, tuple):
-            return response
-        raise response()
+        def recvfrom(self, length):
+            response = self.responses.pop()
+            if isinstance(response, tuple):
+                return response
+            raise response()
+
+    return Connection

@@ -2,6 +2,7 @@ import os
 import sys
 import pytest
 import socket
+import tempfile
 
 from datetime import timedelta
 from mock import patch, MagicMock
@@ -80,53 +81,54 @@ def test_server_bind_error_bad_port(config, server, host, port):
 
 
 @pytest.mark.parametrize("domains", [("dev", ), ("dev", "local.co")])
-def test_server_resolver(config, server, domains, resolver):
+def test_server_resolver(config, server, domains):
     server.config.domains = domains
     with server.bind() as connection:
         _host, _port = connection.getsockname()
         with server._resolver():
             for domain in domains:
-                path = os.path.join(resolver, domain)
+                path = os.path.join(config.resolver_dir, domain)
                 assert os.path.isfile(path)
 
     for domain in domains:
-        path = os.path.join(resolver, domain)
+        path = os.path.join(config.resolver_dir, domain)
         assert not os.path.isfile(path)
 
 
 @pytest.mark.parametrize("domains", [("dev", ), ("dev", "local.co")])
-def test_server_resolver_disabled(config, server, domains, resolver):
+def test_server_resolver_disabled(config, server, domains):
     config.domains = domains
     config.resolver = False
     with server.bind() as connection:
         _host, _port = connection.getsockname()
         with server._resolver():
             for domain in domains:
-                path = os.path.join(resolver, domain)
+                path = os.path.join(config.resolver_dir, domain)
                 assert not os.path.isfile(path)
 
 
 @pytest.mark.parametrize("domains", [("dev", "local.co")])
-def test_server_resolver_cleanup_error(config, server, domains, resolver):
+def test_server_resolver_cleanup_error(config, server, domains):
     server.config.domains = domains
     with server.bind() as connection:
         _host, _port = connection.getsockname()
         with server._resolver():
             for domain in domains:
-                path = os.path.join(resolver, domain)
+                path = os.path.join(config.resolver_dir, domain)
                 assert os.path.isfile(path)
             os.unlink(path)
 
     for domain in domains:
-        path = os.path.join(resolver, domain)
+        path = os.path.join(config.resolver_dir, domain)
         assert not os.path.isfile(path)
 
 
-def test_server_resolver_error(server):
+@patch("devns.server.os.mkdir", side_effect=IOError)
+def test_server_resolver_error(mkdir_mock, server):
     with server.bind() as connection:
         _host, _port = connection.getsockname()
         with server._resolver() as resolver:
-            assert isinstance(resolver, Exception)
+            assert isinstance(resolver, IOError)
 
     for domain in server.config.domains:
         path = os.path.join(server.config.resolver_dir, domain)
@@ -239,7 +241,7 @@ def test_server_choose_address(server, addresses, address):
         None
     ),
 ])
-def test_server_build_response(server, query, expected):
+def test_server_build_response(config, server, query, expected):
     config.address = server.address = "1.2.3.4"
     response = server._build_response(query)
     assert response == expected
@@ -259,7 +261,7 @@ def test_server_build_response(server, query, expected):
         None
     ),
 ])
-def test_server_listen(config, server, query, expected):
+def test_server_listen(config, server, query, expected, Connection):
     config.address = server.address = "1.2.3.4"
 
     server.connection = Connection([
@@ -287,7 +289,7 @@ def test_server_listen(config, server, query, expected):
         None
     ),
 ])
-def test_server_run(config, server, query, expected):
+def test_server_run(config, server, query, expected, Connection):
     config.resolver = False
     config.address = server.address = "1.2.3.4"
     connection = Connection([
@@ -306,10 +308,9 @@ def test_server_run_bind_failure(config, server):
     assert server.run() == 2
 
 
-def test_server_run_resolver_failure(server, resolver):
-    os.chmod(resolver, 400)
+@patch("devns.server.os.mkdir", side_effect=IOError)
+def test_server_run_resolver_failure(mkdir_mock, server):
     assert server.run() == 3
-    os.chmod(resolver, 777)
 
 
 @pytest.mark.parametrize("ifconfig, expected", [
