@@ -222,6 +222,12 @@ class DevNS(object):
 
         try:
             if self.config.resolver:
+                if not os.path.isdir(self.config.resolver_dir):
+                    logger.info(
+                        "resolver dir %r does not exist, creating it",
+                        self.config.resolver_dir
+                    )
+                    os.mkdir(self.config.resolver_dir)
                 for domain in self.config.domains:
                     path = os.path.join(self.config.resolver_dir, domain)
                     with open(path, "w") as resolver:
