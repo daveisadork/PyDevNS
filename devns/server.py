@@ -10,7 +10,8 @@ import functools
 import subprocess
 from datetime import datetime
 
-from . import config, DNS
+from . import config
+from .dns import DNS, Request, Response
 from contextlib import contextmanager
 
 
@@ -27,12 +28,6 @@ def interruptable(func):
             return 0
 
     return decorator
-
-
-def _intify(value):
-    if not isinstance(value, int):
-        value = ord(value)
-    return value
 
 
 class DevNS(object):
@@ -135,6 +130,7 @@ class DevNS(object):
         self._encoded_address = "".join(
             map(lambda x: chr(int(x)), address.split('.'))
         ).encode("latin-1")
+        self._encoded_address = bytes([int(octet) for octet in address.split('.')])
         self._address_last_updated = datetime.utcnow()
 
     @contextmanager
@@ -171,29 +167,25 @@ class DevNS(object):
                 pass
 
     def _build_response(self, data):
-        labels = []
-        opcode = (_intify(data[2]) >> 3) & 15  # This is so gross.
-        if opcode != DNS.OpCode.Query:
-            logger.warning("Ignoring unsupported opcode %s", opcode)
-            return
-        ini = 12
-        lon = _intify(data[ini])
-        while lon != 0:
-            labels.append(data[ini+1:ini+lon+1].decode("latin-1"))
-            ini += lon + 1
-            lon = _intify(data[ini])
-        domain = ".".join(labels)
-        logger.info("QUERY %s IN A %s", domain, self.address)
-        return b"".join((
-            data[:2],
-            b"\x81\x80",
-            data[4:6],
-            data[4:6],
-            b"\x00\x00\x00\x00",  # Questions and Answers Counts
-            data[12:],            # Original Domain Name Question
-            b"\xc0\x0c\x00\x01\x00\x01\x00\x00\x00\x3c\x00\x04",
-            self._encoded_address
-        ))
+        request = Request.from_bytes(data)
+        logger.info("Received request:\n%s", request)
+        if request.header.opcode != DNS.OpCode.Query:
+            logger.warning(
+                "Ignoring unsupported opcode: %r", request.header.opcode_str
+            )
+            return None
+        header = request.header
+        header.qr = 1
+        header.ra = header.rd
+        header.ad = 0
+        header.cd = 1
+        header.query = 1
+        header.answer = 1
+        header.authority = 0
+        header.additional = 0
+        response = Response(header, request.query, self.address)
+        logger.info("Sending response:\n%s", response)
+        return response.to_bytes()
 
     def _listen(self):
         logger.debug(
