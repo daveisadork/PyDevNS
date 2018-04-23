@@ -6,7 +6,7 @@ from setuptools import setup
 # confused? check setup.cfg
 setup(
     name="devns",
-    version="0.4.7",
+    version="0.5.0",
     author="Dave Hayes",
     author_email="dwhayes@gmail.com",
     description="Pure Python DNS server for developers",
