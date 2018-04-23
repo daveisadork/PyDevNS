@@ -1,3 +1,6 @@
+from __future__ import (
+    absolute_import, print_function, unicode_literals
+)
 # These are all transcribed from
 # https://www.iana.org/assignments/dns-parameters/dns-parameters.xhtml
 # I'm pretty sure we only need like 3 or 4 of them, but whatever... maybe this
@@ -129,12 +132,20 @@ def bytes_to_int(value):
     return int("".join("%x" % _intify(x) for x in value), 16)
 
 
+def _bytes(args):
+    return b"".join(chr(i) for i in args)
+
+
+if bytes is not str:
+    _bytes = bytes  # noqa
+
+
 def int_to_bytes(value, length=4):
     fmt = ("%%0%dx" % length) % value
     ints = tuple(
         int(fmt[x:x + 2], 16) for x in range(0, len(fmt), 2)
     )
-    return bytes(ints)
+    return _bytes(ints)
 
 
 def _intify(value):
@@ -249,24 +260,24 @@ class Header(object):
 
     def to_bytes(self):
         header = int("".join((
-            format(self.qr, "b"),         # QR: Response
+            format(self.qr, "b"),        # QR: Response
             format(self.opcode, "04b"),  # Opcode
             format(self.aa, "b"),        # Authoritative Answer
             format(self.tc, "b"),        # Truncated Response
             format(self.rd, "b"),        # Recursion Desired
             format(self.ra, "b"),        # Recursion Available (should match RD)
             format(self.z, "b"),         # Reserved
-            format(self.ad, "b"),         # Authentic Data
-            format(self.cd, "b"),         # Checking Disabled
-            format(self.rcode, "04b")
+            format(self.ad, "b"),        # Authentic Data
+            format(self.cd, "b"),        # Checking Disabled
+            format(self.rcode, "04b")    # status: NOERROR
         )), 2)
         return b"".join((
-            int_to_bytes(self.id),             # ID
-            int_to_bytes(header),         # status: NOERROR
-            int_to_bytes(self.query),          # QUERY: 1
-            int_to_bytes(self.answer),              # ANSWER: 1
-            int_to_bytes(self.authority),              # AUTHORITY: 0
-            int_to_bytes(self.additional),              # ADDITIONAL: 0
+            int_to_bytes(self.id),          # ID
+            int_to_bytes(header),
+            int_to_bytes(self.query),       # QUERY: 1
+            int_to_bytes(self.answer),      # ANSWER: 1
+            int_to_bytes(self.authority),   # AUTHORITY: 0
+            int_to_bytes(self.additional),  # ADDITIONAL: 0
         ))
 
 
@@ -367,12 +378,12 @@ class Response(Request):
     def to_bytes(self):
         return b"".join((
             super(Response, self).to_bytes(),
-            b"\xc0\x0c",            # Pointer/Offset
-            int_to_bytes(self.query.rrtype),   # TYPE: A
+            b"\xc0\x0c",                      # Pointer/Offset
+            int_to_bytes(self.query.rrtype),  # TYPE: A
             int_to_bytes(self.query.qclass),  # CLASS: IN
-            int_to_bytes(self.ttl, 8),          # TTL: 60
-            int_to_bytes(4),              # RDLENGTH: 4 octets
-            bytes([int(octet) for octet in self.address.split('.')]),
+            int_to_bytes(self.ttl, 8),        # TTL: 60
+            int_to_bytes(4),                  # RDLENGTH: 4 octets
+            _bytes(int(octet) for octet in self.address.split('.')),
         ))
 
     def __str__(self):
