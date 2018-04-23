@@ -132,11 +132,11 @@ def bytes_to_int(value):
     return int("".join("%x" % _intify(x) for x in value), 16)
 
 
-def _bytes(args):
+def _bytes(args):  # pragma: no cover
     return b"".join(chr(i) for i in args)
 
 
-if bytes is not str:
+if bytes is not str:  # pragma: no cover
     _bytes = bytes  # noqa
 
 
